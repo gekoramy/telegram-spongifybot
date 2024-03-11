@@ -1,4 +1,8 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
+import Universum
+
 main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main = putTextLn "Hello, Haskell!"
