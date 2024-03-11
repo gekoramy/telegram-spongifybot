@@ -13,11 +13,14 @@
           hpkgs = pkgs.haskellPackages;
 
           name = "telegram-spongifybot";
+
+          pkg = hpkgs.callCabal2nix name self {};
+
         in
         {
-          packages.${name} = hpkgs.callCabal2nix name self {};
+          packages.${name} = pkg;
 
-          packages.default = self.packages.${system}.${name};
+          packages.default = pkg;
 
           devShells.default = pkgs.mkShell {
             buildInputs = with pkgs; [
@@ -25,7 +28,7 @@
               ghcid
               cabal-install
             ];
-            inputsFrom = map (__getAttr "env") (__attrValues self.packages.${system});
+            inputsFrom = [ pkg."env" ];
           };
 
           defaultPackage = self.packages.${system}.default;
