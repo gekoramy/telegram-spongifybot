@@ -22,6 +22,18 @@
 
           packages.default = pkg;
 
+          packages.image = pkgs.dockerTools.buildImage {
+            inherit name;
+            tag = "latest";
+            copyToRoot = [
+              pkg
+              pkgs.cacert
+            ];
+            config = {
+              Cmd = [ "${pkg}/bin/${name}" ];
+            };
+          };
+
           devShells.default = pkgs.mkShell {
             buildInputs = with pkgs; [
               hpkgs.haskell-language-server
