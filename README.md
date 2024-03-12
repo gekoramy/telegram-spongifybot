@@ -1,18 +1,14 @@
 # telegram-spongifybot
 
 ```sh
-nix build .#image
+docker image pull ghcr.io/gekoramy/telegram-spongifybot:latest
 ```
 
 ```sh
-docker load < result
-```
-
-```sh
-docker run \
+docker container run \
   --detach \
   --tty \
   --env-file .env \
   --restart always \
-  telegram-spongifybot
+  ghcr.io/gekoramy/telegram-spongifybot:latest
 ```
