@@ -34,4 +34,5 @@ jobs:
         run: |
           docker image load < result
           docker image tag telegram-spongifybot ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          docker image push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          docker image tag telegram-spongifybot ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker image push --all-tags ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
