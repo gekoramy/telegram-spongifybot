@@ -10,5 +10,6 @@ docker container run \
   --tty \
   --env-file .env \
   --restart always \
+  --log-driver json-file --log-opt max-size=10m --log-opt max-file=1000 --log-opt compress=true \
   ghcr.io/gekoramy/telegram-spongifybot:latest
 ```

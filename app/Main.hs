@@ -13,6 +13,7 @@ import Control.Concurrent.STM
 import Data.Aeson (KeyValue ((.=)), Value, object)
 import Data.Aeson.Schema
 import qualified Data.Char as Char
+import GHC.IO.Handle
 import Network.HTTP.Client.Conduit (responseTimeoutMicro)
 import Network.HTTP.Simple
 import System.Environment (getEnv)
@@ -28,11 +29,20 @@ type Updates =
           chat: {
             id: Int64,
           },
+          date: Word,
+          from: {
+            id: Int64,
+            username: Maybe Text,
+          },
           message_id: Int64,
           text: Maybe Text,
         },
         inline_query: Maybe {
           id: Text,
+          from: {
+            id: Int64,
+            username: Maybe Text,
+          },
           query: Text,
         },
       },
@@ -86,7 +96,7 @@ infixl 0 |>
 main :: IO ()
 main = do
   n <- getNumCapabilities
-  putTextLn $ "# of capabilities " <> show n
+  hPutStrLn stderr ("# of capabilities " <> show n :: Text)
 
   token <- getEnv "BOT"
   base <- parseRequest "POST https://api.telegram.org"
@@ -116,7 +126,7 @@ insist :: IO a -> IO a
 insist fn = catchAny fn attempt
   where
     attempt e = do
-      print e
+      hPrint stderr e
       threadDelay (1000 * 1000)
       insist fn
 
@@ -168,6 +178,23 @@ fetch Req {..} In {..} = iterateM_ go Nothing
               |> [get| .result[].inline_query?.(id, query) |]
               |> catMaybes
               |> map (\(q, t) -> Q {query = q, text = t})
+
+      let date =
+            res
+              |> getResponseHeader "Date"
+              |> map decodeUtf8
+              |> unwords
+      let ml =
+            jsn
+              |> [get| .result[].message?.(from.id, from.username, date) |]
+              |> catMaybes
+              |> map (\(user, name, t) -> unwords $ "-" : show t : show user : maybeToList name)
+      let ql =
+            jsn
+              |> [get| .result[].inline_query?.(from.id, from.username) |]
+              |> catMaybes
+              |> map (\(user, name) -> unwords $ "-" : show user : maybeToList name)
+
       let latest =
             jsn
               |> [get| .result[].update_id |]
@@ -176,6 +203,10 @@ fetch Req {..} In {..} = iterateM_ go Nothing
 
       whenNotNull qs newQs
       whenNotNull ms newMs
+      unless (null ml && null ql) $ do
+        putTextLn (date <> ":")
+        putText (unlines $ ml ++ ql)
+        hFlush stdout
       return latest
 
     req :: Maybe Int64 -> Request
