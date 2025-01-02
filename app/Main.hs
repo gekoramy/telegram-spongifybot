@@ -188,12 +188,12 @@ fetch Req {..} In {..} = iterateM_ go Nothing
             jsn
               |> [get| .result[].message?.(from.id, from.username, date) |]
               |> catMaybes
-              |> map (\(user, name, t) -> unwords $ "-" : show t : show user : maybeToList name)
+              |> map (\(user, name, t) -> unwords $ date : show t : show user : maybeToList name)
       let ql =
             jsn
               |> [get| .result[].inline_query?.(from.id, from.username) |]
               |> catMaybes
-              |> map (\(user, name) -> unwords $ "-" : show user : maybeToList name)
+              |> map (\(user, name) -> unwords $ date : show user : maybeToList name)
 
       let latest =
             jsn
@@ -204,8 +204,7 @@ fetch Req {..} In {..} = iterateM_ go Nothing
       whenNotNull qs newQs
       whenNotNull ms newMs
       unless (null ml && null ql) $ do
-        putTextLn (date <> ":")
-        putText (unlines $ ml ++ ql)
+        forM_ (ml ++ ql) putTextLn
         hFlush stdout
       return latest
 
